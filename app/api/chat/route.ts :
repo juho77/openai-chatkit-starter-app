@@ -1,0 +1,21 @@
+import { NextRequest } from 'next/server';
+import { streamText } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+
+export const runtime = 'edge'; // latence basse + SSE
+
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY!, // définie sur Vercel
+});
+
+export async function POST(req: NextRequest) {
+  const { messages } = await req.json();
+
+  const result = await streamText({
+    model: openai(process.env.MODEL ?? 'gpt-4.1-mini'), // change à volonté
+    messages, // [{ role: 'user'|'assistant'|'system', content }]
+    temperature: 0.2,
+  });
+
+  return result.toAIStreamResponse(); // SSE prêt pour le client
+}
